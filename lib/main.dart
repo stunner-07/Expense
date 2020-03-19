@@ -1,11 +1,15 @@
 import 'package:expense/Widgets/charts.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import './models/transaction.dart';
 import './Widgets/new_transaction.dart';
 import './Widgets/transactionList.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // SystemChrome.setPreferredOrientations(
+  //     [DeviceOrientation.portraitUp,
+  //     DeviceOrientation.portraitDown]);
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
@@ -44,13 +48,12 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  void _deleteTransaction(String id){
+  void _deleteTransaction(String id) {
     setState(() {
-      _userTransactions.removeWhere((tx)=>tx.id==id);
+      _userTransactions.removeWhere((tx) => tx.id == id);
     });
   }
-  
-  
+
   void _startNewTransaction(BuildContext ctx) {
     showModalBottomSheet(
         context: ctx,
@@ -58,6 +61,8 @@ class _MyHomePageState extends State<MyHomePage> {
           return NewTransaction(_addNewTransaction);
         });
   }
+
+  bool _showChart = false;
 
   final List<Transaction> _userTransactions = [
     // Transaction(
@@ -81,7 +86,8 @@ class _MyHomePageState extends State<MyHomePage> {
     }).toList();
   }
 
-  void _addNewTransaction(String txTitle, double txAmount,DateTime chosenDate) {
+  void _addNewTransaction(
+      String txTitle, double txAmount, DateTime chosenDate) {
     final Transaction newtx = new Transaction(
       title: txTitle,
       amount: txAmount,
@@ -94,18 +100,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget build(BuildContext context) {
+    final appbar = AppBar(
+      title: Text('Personal Expenses'),
+      actions: <Widget>[
+        IconButton(
+          icon: Icon(
+            Icons.add,
+          ),
+          onPressed: () => _startNewTransaction(context),
+        ),
+      ],
+    );
+    final islandscape=MediaQuery.of(context).orientation==Orientation.landscape;
+    final txList=Container(
+                  height: (MediaQuery.of(context).size.height -
+                          appbar.preferredSize.height -
+                          MediaQuery.of(context).padding.top) *
+                      0.7,
+                  child:
+                      TransactionList(_userTransactions, _deleteTransaction));
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Personal Expenses'),
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(
-              Icons.add,
-            ),
-            onPressed: () => _startNewTransaction(context),
-          )
-        ],
-      ),
+      appBar: appbar,
       body: SingleChildScrollView(
         child: Center(
           child: Column(
@@ -118,8 +133,42 @@ class _MyHomePageState extends State<MyHomePage> {
               //     child: Text('hi'),
               //   ),
               // ),
-              Chart(_recentTransactions),
-              TransactionList(_userTransactions,_deleteTransaction),
+              if(islandscape)
+              Row(
+                children: <Widget>[
+                  Text('Show Chart'),
+                  Switch(
+                    activeColor: Theme.of(context).primaryColor,
+                    value: _showChart,
+                    onChanged: (value) {
+                      setState(() {
+                        _showChart = value;
+                      });
+                      
+                    },
+                  ),
+                ],
+              ),
+              if(!islandscape)
+              Container(
+                height: (MediaQuery.of(context).size.height -
+                        appbar.preferredSize.height -
+                        MediaQuery.of(context).padding.top) *
+                    0.3,
+                child: Chart(_recentTransactions),
+              ),
+              if(!islandscape)
+              txList,
+              if(islandscape)
+              _showChart?
+              Container(
+                height: (MediaQuery.of(context).size.height -
+                        appbar.preferredSize.height -
+                        MediaQuery.of(context).padding.top) *
+                    0.7,
+                child: Chart(_recentTransactions),
+              ):
+              txList,
             ],
           ),
         ),
